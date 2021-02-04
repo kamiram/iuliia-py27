@@ -1,3 +1,4 @@
+# coding: utf8
 """
 Transliterate Cyrillic → Latin in every possible way
 """

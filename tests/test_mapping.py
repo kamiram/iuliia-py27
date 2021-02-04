@@ -1,3 +1,4 @@
+# coding: utf8
 import pytest
 from iuliia.mapping import Mapping, LetterMapping, PrevMapping, NextMapping, EndingMapping
 

@@ -1,3 +1,4 @@
+# coding: utf8
 """
 Iuliia command-line interface
 """
@@ -17,7 +18,7 @@ def main():
     schema_name = sys.argv[1]
     schema = iuliia.Schemas.get(schema_name)
     if schema is None:
-        print(f"Schema '{schema_name}' does not exist. Supported schemas:")
+        print("Schema '{schema_name}' does not exist. Supported schemas:".format(**locals()))
         print("\n".join(iuliia.Schemas.names()))
         sys.exit(1)
 

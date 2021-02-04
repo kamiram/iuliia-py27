@@ -1,3 +1,4 @@
+# coding: utf8
 """
 Translate engine.
 """
@@ -5,10 +6,10 @@ Translate engine.
 import re
 from .schema import Schema
 
-SPLITTER = re.compile(r"\b")
+SPLITTER = re.compile(r"\W+", re.UNICODE)
 
 
-def translate(source: str, schema: Schema):
+def translate(source, schema):
     """
     Translate source Cyrillic string into Latin using specified schema.
     Translates sentences word by word, delegating specifics of transliteration
@@ -18,11 +19,38 @@ def translate(source: str, schema: Schema):
     return "".join(translated)
 
 
-def _split_sentence(source: str):
-    return (word for word in SPLITTER.split(source) if word)
+def _split_sentence(source):
+    words = list()
+    cache = list()
+    state = None
+    if type(source) != unicode:
+        source = source.decode('utf-8')
+    for char in source:
+        if state is None:
+            state = char.isalpha()
+        if state is True:
+            if char.isalpha():
+                cache.append(char)
+            else:
+                words.append("".join(cache))
+                cache = list()
+                cache.append(char)
+                state = False
+        else:
+            if not char.isalpha():
+                cache.append(char)
+            else:
+                words.append("".join(cache))
+                cache = list()
+                cache.append(char)
+                state = True
+    if cache:
+        words.append("".join(cache))
+
+    return (word for word in words if word)
 
 
-def _translate_word(word: str, schema: Schema):
+def _translate_word(word, schema):
     stem, ending = _split_word(word)
     translated_ending = schema.translate_ending(ending) if ending else None
     if translated_ending:

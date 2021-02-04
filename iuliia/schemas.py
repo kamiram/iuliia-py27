@@ -1,13 +1,13 @@
+# coding: utf8
 """
 Transliteration schema registry.
 """
 
+import os.path
 import json
 from operator import attrgetter
-from pathlib import Path
-from enum import Enum
-from typing import List, Tuple
 from iuliia.schema import Schema
+from aenum import Enum
 
 
 def _schema_loader():
@@ -15,17 +15,20 @@ def _schema_loader():
 
 
 def _definition_reader():
-    schemas_path = Path(__file__).parent / "schemas"
-    if not schemas_path.exists():
-        raise ValueError(f"Schema path does not exist: {schemas_path}")
-    paths = schemas_path.glob("*.json")
-    for path in paths:
+    schemas_path = os.path.join(os.path.abspath(os.path.join(__file__, os.pardir)), "schemas")
+    if not os.path.exists(schemas_path):
+        raise ValueError("Schema path does not exist: {schemas_path}".format(**locals()))
+    for path in os.listdir(schemas_path):
+        path = os.path.join(schemas_path, path)
+        name, ext = os.path.splitext(path)
+        if ext != '.json':
+            continue
         definition = _load_definition(path)
         yield definition
 
 
 def _load_definition(path):
-    with open(path, encoding="utf-8") as file:
+    with open(path) as file:
         return json.load(file)
 
 
@@ -33,17 +36,17 @@ class _Schemas(Enum):
     """Base class for supported transliteration schemas."""
 
     @classmethod
-    def names(cls) -> List[str]:
+    def names(cls):
         """Return names of all supported schemas."""
         return sorted(item.name for item in cls)
 
     @classmethod
-    def items(cls) -> List[Tuple[str, Schema]]:
+    def items(cls):
         """Return all supported schemas."""
         return [(item.name, item.value) for item in sorted(cls, key=attrgetter("value.name"))]
 
     @classmethod
-    def get(cls, name: str) -> Schema:
+    def get(cls, name):
         """Return schema by its name or ``None`` if nothing found."""
         item = cls.__members__.get(name)
         return item.value if item else None

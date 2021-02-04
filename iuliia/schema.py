@@ -1,11 +1,12 @@
+# coding: utf8
 """
 Transliteration schema base features.
 """
-from typing import Dict, List
+
 from .mapping import LetterMapping, PrevMapping, NextMapping, EndingMapping
 
 
-class Schema:
+class Schema(object):
     """
     Transliteration schema. Defines the way to translate individual letters.
     """
@@ -13,13 +14,13 @@ class Schema:
     # pylint: disable=too-many-arguments
     def __init__(
         self,
-        name: str,
-        mapping: Dict[str, str],
-        prev_mapping: Dict[str, str] = None,
-        next_mapping: Dict[str, str] = None,
-        ending_mapping: Dict[str, str] = None,
-        samples: List[List[str]] = None,
-        description: str = None,
+        name,
+        mapping,
+        prev_mapping = None,
+        next_mapping = None,
+        ending_mapping = None,
+        samples = None,
+        description = None,
     ):
         self.name = name
         self.description = description
@@ -29,7 +30,7 @@ class Schema:
         self.ending_map = EndingMapping(ending_mapping or {})
         self.samples = samples or []
 
-    def translate_letter(self, prev: str, curr: str, next_: str) -> str:
+    def translate_letter(self, prev, curr, next_):
         """Translate ``curr`` letter according to schema mappings.
 
         ``prev`` (the previous letter) and ``next_`` (the next one)
@@ -43,7 +44,7 @@ class Schema:
             letter = self.map.get(curr, curr)
         return letter
 
-    def translate_ending(self, ending: str) -> str:
+    def translate_ending(self, ending):
         """Translate word ending according to schema mapping."""
         return self.ending_map.get(ending)
 
@@ -54,8 +55,9 @@ class Schema:
         return self.name
 
     @classmethod
-    def load(cls, definition: dict):
+    def load(cls, definition):
         """Load schema from definition."""
+
         defn = SchemaDefinition(definition)
         defn.parse()
         return Schema(
@@ -70,23 +72,23 @@ class Schema:
 
 
 # pylint: disable=too-many-instance-attributes
-class SchemaDefinition:
+class SchemaDefinition(object):
     """Translitiration schema definition."""
 
-    def __init__(self, source: dict):
+    def __init__(self, source):
         self.source = source
         self.name = ""
-        self.description: None
-        self.mapping: Dict[str, str] = {}
+        self.description = ""
+        self.mapping = {}
         self.prev_mapping = None
         self.next_mapping = None
         self.ending_mapping = None
-        self.samples: List[List[str]] = []
+        self.samples = []
 
     def parse(self):
         """Parse source definition, raising ValueError if necessary."""
-        self._parse_attr("name", type_=str, required=True, nonempty=True)
-        self._parse_attr("description", type_=str, required=False)
+        self._parse_attr("name", type_=basestring, required=True, nonempty=True)
+        self._parse_attr("description", type_=basestring, required=False)
         self._parse_attr("mapping", type_=dict, required=True)
         self._parse_attr("prev_mapping", type_=dict, required=False)
         self._parse_attr("next_mapping", type_=dict, required=False)
@@ -96,27 +98,27 @@ class SchemaDefinition:
     def _parse_attr(self, name, type_, required, nonempty=False):
         value = self.source.get(name)
         if required and value is None:
-            raise ValueError(f"{self.name}: Missing schema {name}")
+            raise ValueError("{self.name}: Missing schema {name}".format(**locals()))
         if required and nonempty and not value:
-            raise ValueError(f"{self.name}: Schema {name} should not be empty")
+            raise ValueError("{self.name}: Schema {name} should not be empty".format(**locals()))
         if value is not None and not isinstance(value, type_):
-            raise ValueError(f"{self.name}: Invalid schema {name}: {value}")
+            raise ValueError("{self.name}: Invalid schema {name}: {value}".format(**locals()))
         setattr(self, name, value)
 
     def _parse_samples(self):
         samples = self.source.get("samples")
         if samples is not None and not isinstance(samples, list):
-            raise ValueError(f"{self.name}: Invalid schema samples: {samples}")
+            raise ValueError("{self.name}: Invalid schema samples: {samples}".format(**locals()))
         if samples:
             for sample in samples:
                 self._raise_on_invalid_sample(sample)
         self.samples = samples
 
     def _raise_on_invalid_sample(self, sample):
-        message = f"{self.name}: Invalid schema sample: {sample}"
+        message = "{self.name}: Invalid schema sample: {sample}".format(**locals())
         if not isinstance(sample, list):
             raise ValueError(message)
         if len(sample) != 2:
             raise ValueError(message)
-        if not isinstance(sample[0], str) or not isinstance(sample[1], str):
+        if not isinstance(sample[0], basestring) or not isinstance(sample[1], basestring):
             raise ValueError(message)
